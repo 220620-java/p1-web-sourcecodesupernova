@@ -44,6 +44,9 @@ public class UserDelegate implements ServletDelegate{
 			writer = resp.getWriter();
 			switch(req.getMethod()) {
 			case "GET":
+				if (validateFields(in.getFieldNameList())) {
+					if(validateFields(in.getFieldFilterByList()))
+				}
 				getResult = sql.select(in);
 				//Formatting the results of the sql
 				if (getResult != null) {
@@ -59,19 +62,22 @@ public class UserDelegate implements ServletDelegate{
 							response += "|\t" + s + "\t|";
 						}
 					});
-					writer.write(response);
 				}
 				break;
 			case "POST":
 				result = sql.insert(in);
+				response += "Rows Affected: " + result;
 				break;
 			case "PUT":
-				result = sql.update(in);
+				result = sql.update(in);				
+				response += "Rows Affected: " + result;
 				break;
 			case "DELETE":
 				result = sql.delete(in);
+				response += "Rows Affected: " + result;
 				break;
 			}
+			writer.write(response);
 		}
 		catch (Exception e) {
 			//TODO Exception Logger
@@ -79,12 +85,12 @@ public class UserDelegate implements ServletDelegate{
 		
 	}
 	
-	protected Boolean validateFields(Query obj) {
+	protected Boolean validateFields(List<String> fields) {
 		/*Local Variables*/
 		Boolean valid = true;
 		
 		/*Function*/
-		for (String s : obj.getFieldNameList()) {
+		for (String s : fields) {
 			if (!validFieldNames.contains(s)) {
 				valid = false;
 				response += "\n\t" + s;
@@ -97,14 +103,14 @@ public class UserDelegate implements ServletDelegate{
 	}
 	
 	/*Validates values by comparing to the corresponding field's data type*/
-	protected Boolean validateValues(Query obj) {
+	protected Boolean validateValues(List<String> values) {
 		/*Local Variables*/
 		Boolean valid = true;
 		int index = 0;
-		List<String> fields = obj.getFieldNameList();
+		List<String> fields = in.getFieldNameList();
 		
 		/*Function*/
-		for (String s : obj.getFieldValueList()) {
+		for (String s : values) {
 			switch(fields.get(index)) {
 			case "userid": //integer
 				valid = ValidateData.integerType(s);
