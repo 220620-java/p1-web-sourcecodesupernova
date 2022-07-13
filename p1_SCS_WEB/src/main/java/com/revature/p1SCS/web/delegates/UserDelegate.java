@@ -45,7 +45,13 @@ public class UserDelegate implements ServletDelegate{
 			switch(req.getMethod()) {
 			case "GET":
 				if (validateFields(in.getFieldNameList())) {
-					if(validateFields(in.getFieldFilterByList()))
+					if(validateFields(in.getFilterList())) {
+						if(validateValues(in.getFieldValueList())) {
+							if(validateValues(in.getFilterValueList())) {
+								
+							}
+						}
+					}
 				}
 				getResult = sql.select(in);
 				//Formatting the results of the sql
