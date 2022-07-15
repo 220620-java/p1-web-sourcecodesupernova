@@ -1,5 +1,7 @@
 package com.revature.p1SCS.web.service;
 
+import java.sql.Date;
+
 public class ValidateData {
 	/*Data with the char type should have the same length as a given size
 	 * Also, if the input contains a ';' it would break the SQL */
@@ -49,6 +51,19 @@ public class ValidateData {
 		Boolean valid = true;
 		try {
 			Double.parseDouble(input);
+		}
+		catch (Exception e) {
+			//TODO Exception Logger
+			valid = false;
+		}
+		return valid;
+	}
+	
+	/*Data with the double type should be able to parse into a double*/
+	public Boolean dateType(String input) {
+		Boolean valid = true;
+		try {
+			Date.valueOf(input);
 		}
 		catch (Exception e) {
 			//TODO Exception Logger
