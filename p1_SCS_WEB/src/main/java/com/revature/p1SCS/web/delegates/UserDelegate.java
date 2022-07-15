@@ -25,8 +25,7 @@ public class UserDelegate implements ServletDelegate {
 	private List<Query> getResult = null;
 	private int result = -1;
 	private String response = "";
-	private List<String> validFieldNames = new ArrayList<>(),
-			validStrArgs = new ArrayList<>(),
+	private List<String> validFieldNames = new ArrayList<>(), validStrArgs = new ArrayList<>(),
 			validNumArgs = new ArrayList<>();;
 
 	/* Constructor */
@@ -38,12 +37,12 @@ public class UserDelegate implements ServletDelegate {
 		validFieldNames.add("userfname");
 		validFieldNames.add("userminit");
 		validFieldNames.add("userlname");
-		
-		//Setup validStrArgs
+
+		// Setup validStrArgs
 		validStrArgs.add("LIKE");
 		validStrArgs.add("=");
-		
-		//Setup validNumArgs
+
+		// Setup validNumArgs
 		validNumArgs.add(">");
 		validNumArgs.add(">=");
 		validNumArgs.add("<=");
@@ -58,28 +57,30 @@ public class UserDelegate implements ServletDelegate {
 		try {
 			writer = resp.getWriter();
 			switch (req.getMethod()) {
-			case "GET": //Will be a select statement. Filter is optional.
+			case "GET": // Will be a select statement. Filter is optional.
 				if (validateFields(in.getFieldNameList())) {
 					if (validateFields(in.getFilterList()) || in.getFilterList().equals(new ArrayList<>())) {
 						if (validateValues(in.getFieldValueList(), in.getFieldNameList())) {
-							if (validateValues(in.getFilterValueList(), in.getFilterList()) || in.getFilterList().equals(new ArrayList<>())) {
-								if (validateArgs(in.getArgumentTypes()) || in.getFilterList().equals(new ArrayList<>())) {
+							if (validateValues(in.getFilterValueList(), in.getFilterList())
+									|| in.getFilterList().equals(new ArrayList<>())) {
+								if (validateArgs(in.getArgumentTypes(), in.getFilterList())
+										|| in.getFilterList().equals(new ArrayList<>())) {
 									getResult = sql.select(in);
 
 									// Formatting the results of the sql
 									if (getResult != null) {
 										// Setting column names
-											getResult.get(0).getFieldNameList().stream().forEach(x -> {
-												response += "|\t" + x + "\t|";
-											});
+										getResult.get(0).getFieldNameList().stream().forEach(x -> {
+											response += "|\t" + x + "\t|";
+										});
 
-											// Setting values
-											getResult.stream().forEach(x -> {
-												response += "\n";
-												for (String s : x.getFieldValueList()) {
-													response += "|\t" + s + "\t|";
-												}
-											});
+										// Setting values
+										getResult.stream().forEach(x -> {
+											response += "\n";
+											for (String s : x.getFieldValueList()) {
+												response += "|\t" + s + "\t|";
+											}
+										});
 									}
 								}
 							}
@@ -87,7 +88,7 @@ public class UserDelegate implements ServletDelegate {
 					}
 				}
 				break;
-			case "POST"://Will be an insert statement. Filter is not used.
+			case "POST":// Will be an insert statement. Filter is not used.
 				if (validateFields(in.getFieldNameList())) {
 					if (validateValues(in.getFieldValueList(), in.getFieldNameList())) {
 						result = sql.insert(in);
@@ -95,11 +96,11 @@ public class UserDelegate implements ServletDelegate {
 					}
 				}
 				break;
-			case "PUT"://Will be an update statement. Filter is mandatory.
+			case "PUT":// Will be an update statement. Filter is mandatory.
 				if (validateFields(in.getFieldNameList())) {
 					if (validateFields(in.getFilterList())) {
 						if (validateValues(in.getFieldValueList(), in.getFieldNameList())) {
-							if (validateArgs(in.getArgumentTypes())) {
+							if (validateArgs(in.getArgumentTypes(), in.getFilterList())) {
 								result = sql.delete(in);
 								response += "Rows Affected: " + result;
 							}
@@ -107,10 +108,10 @@ public class UserDelegate implements ServletDelegate {
 					}
 				}
 				break;
-			case "DELETE"://Will be an delete statement. Filter is mandatory. Fields are not used.
+			case "DELETE":// Will be an delete statement. Filter is mandatory. Fields are not used.
 				if (validateFields(in.getFilterList())) {
 					if (validateValues(in.getFilterValueList(), in.getFilterList())) {
-						if (validateArgs(in.getArgumentTypes())) {
+						if (validateArgs(in.getArgumentTypes(), in.getFilterList())) {
 							result = sql.delete(in);
 							response += "Rows Affected: " + result;
 						}
@@ -149,68 +150,81 @@ public class UserDelegate implements ServletDelegate {
 		int index = 0;
 
 		/* Function */
-		for (String s : values) {
-			switch (fields.get(index)) {
-			case "userid": // integer
-				valid = v.integerType(s);
-				break;
-			case "useremail": // varchar(50)
-				valid = v.varcharType(s, 50);
-				break;
-			case "userpassword": // varchar(30)
-				valid = v.varcharType(s, 30);
-				break;
-			case "userfname": // varchar(25)
-				valid = v.varcharType(s, 25);
-				break;
-			case "userminit": // char(1)
-				valid = v.charType(s, 1);
-				break;
-			case "userlname": // varchar(25)
-				valid = v.varcharType(s, 25);
-				break;
-			default:
-				valid = false;
-				break;
+		if (values.stream().filter(x -> !(x.equals(""))).toArray().length == fields.stream()
+				.filter(x -> !(x.equals(""))).toArray().length) {// Nonmatching sizes cause problems
+			for (String s : values) {
+				if (valid) {// One failure causes test to stop
+					switch (fields.get(index)) {
+					case "userid": // integer
+						valid = v.integerType(s);
+						break;
+					case "useremail": // varchar(50)
+						valid = v.varcharType(s, 50);
+						break;
+					case "userpassword": // varchar(30)
+						valid = v.varcharType(s, 30);
+						break;
+					case "userfname": // varchar(25)
+						valid = v.varcharType(s, 25);
+						break;
+					case "userminit": // char(1)
+						valid = v.charType(s, 1);
+						break;
+					case "userlname": // varchar(25)
+						valid = v.varcharType(s, 25);
+						break;
+					default:
+						valid = false;
+						break;
+					}
+					index++;
+				}
 			}
-			index++;
+		} else {
+			valid = false;
 		}
 		return valid;
 	}
-	
+
 	/* Validates arguments by comparing to the corresponding field's data type */
-	protected Boolean validateArgs(List<String> args) {
+	protected Boolean validateArgs(List<String> args, List<String> fields) {
 		/* Local Variables */
 		Boolean valid = true;
 		int index = 0;
-		List<String> fields = in.getFilterList();
 
 		/* Function */
-		for (String s : args) {
-			switch (fields.get(index)) {
-			case "userid": // integer
-				valid = validNumArgs.contains(s);
-				break;
-			case "useremail": // varchar(50)
-				valid = validStrArgs.contains(s.toUpperCase());
-				break;
-			case "userpassword": // varchar(30)
-				valid = validStrArgs.contains(s.toUpperCase());
-				break;
-			case "userfname": // varchar(25)
-				valid = validStrArgs.contains(s.toUpperCase());
-				break;
-			case "userminit": // char(1)
-				valid = validStrArgs.contains(s.toUpperCase());
-				break;
-			case "userlname": // varchar(25)
-				valid = validStrArgs.contains(s.toUpperCase());
-				break;
-			default:
-				valid = false;
-				break;
+		if (args.stream().filter(x -> !(x.equals(""))).toArray().length == fields.stream().filter(x -> !(x.equals("")))
+				.toArray().length) {// Nonmatching sizes cause problems
+			for (String s : args) {
+				if (valid) {// One failure causes test to stop
+					switch (fields.get(index)) {
+					case "userid": // integer
+						valid = validNumArgs.contains(s);
+						break;
+					case "useremail": // varchar(50)
+						valid = validStrArgs.contains(s.toUpperCase());
+						break;
+					case "userpassword": // varchar(30)
+						valid = validStrArgs.contains(s.toUpperCase());
+						break;
+					case "userfname": // varchar(25)
+						valid = validStrArgs.contains(s.toUpperCase());
+						break;
+					case "userminit": // char(1)
+						valid = validStrArgs.contains(s.toUpperCase());
+						break;
+					case "userlname": // varchar(25)
+						valid = validStrArgs.contains(s.toUpperCase());
+						break;
+					default:
+						valid = false;
+						break;
+					}
+					index++;
+				}
 			}
-			index++;
+		} else {
+			valid = false;
 		}
 		return valid;
 	}
