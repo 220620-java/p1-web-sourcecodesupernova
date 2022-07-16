@@ -57,6 +57,8 @@ public class TransactionDelegate implements ServletDelegate {
 	public void handle(HttpServletRequest req, HttpServletResponse resp) {
 		try {
 			writer = resp.getWriter();
+			in = objMapper.readValue(req.getInputStream(), Query.class);
+			in.setTableName("tbl_transactions");
 			switch (req.getMethod()) {
 			case "GET": // Will be a select statement. Filter is optional.
 				if (validateFields(in.getFieldNameList())) {
@@ -201,23 +203,26 @@ public class TransactionDelegate implements ServletDelegate {
 			for (String s : args) {
 				if (valid) {// One failure causes test to stop
 					switch (fields.get(index)) {
-					case "userid": // integer
+					case "transid": // integer
 						valid = validNumArgs.contains(s);
 						break;
-					case "useremail": // varchar(50)
+					case "transdate": // date
+						valid = validNumArgs.contains(s);
+						break;
+					case "transtype":
 						valid = validStrArgs.contains(s.toUpperCase());
 						break;
-					case "userpassword": // varchar(30)
+					case "transprebalance": // decimal
+						valid = validNumArgs.contains(s);
+						break;
+					case "transpostbalance": // decimal
+						valid = validNumArgs.contains(s);
+						break;
+					case "transnotes": // text
 						valid = validStrArgs.contains(s.toUpperCase());
 						break;
-					case "userfname": // varchar(25)
-						valid = validStrArgs.contains(s.toUpperCase());
-						break;
-					case "userminit": // char(1)
-						valid = validStrArgs.contains(s.toUpperCase());
-						break;
-					case "userlname": // varchar(25)
-						valid = validStrArgs.contains(s.toUpperCase());
+					case "accountid": // integer
+						valid = validNumArgs.contains(s);
 						break;
 					default:
 						valid = false;
