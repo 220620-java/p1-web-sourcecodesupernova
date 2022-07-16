@@ -56,6 +56,8 @@ public class UserDelegate implements ServletDelegate {
 	public void handle(HttpServletRequest req, HttpServletResponse resp) {
 		try {
 			writer = resp.getWriter();
+			in = objMapper.readValue(req.getInputStream(), Query.class);
+			in.setTableName("tbl_users");
 			switch (req.getMethod()) {
 			case "GET": // Will be a select statement. Filter is optional.
 				if (validateFields(in.getFieldNameList())) {

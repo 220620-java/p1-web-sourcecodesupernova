@@ -57,6 +57,8 @@ public class TransactionDelegate implements ServletDelegate {
 	public void handle(HttpServletRequest req, HttpServletResponse resp) {
 		try {
 			writer = resp.getWriter();
+			in = objMapper.readValue(req.getInputStream(), Query.class);
+			in.setTableName("tbl_transactions");
 			switch (req.getMethod()) {
 			case "GET": // Will be a select statement. Filter is optional.
 				if (validateFields(in.getFieldNameList())) {
