@@ -60,31 +60,30 @@ public class UserDelegate implements ServletDelegate {
 			case "GET": // Will be a select statement. Filter is optional.
 				if (validateFields(in.getFieldNameList())) {
 					if (validateFields(in.getFilterList()) || in.getFilterList().equals(new ArrayList<>())) {
-						if (validateValues(in.getFieldValueList(), in.getFieldNameList())) {
-							if (validateValues(in.getFilterValueList(), in.getFilterList())
+						if (validateValues(in.getFilterValueList(), in.getFilterList())
+								|| in.getFilterList().equals(new ArrayList<>())) {
+							if (validateArgs(in.getArgumentTypes(), in.getFilterList())
 									|| in.getFilterList().equals(new ArrayList<>())) {
-								if (validateArgs(in.getArgumentTypes(), in.getFilterList())
-										|| in.getFilterList().equals(new ArrayList<>())) {
-									getResult = sql.select(in);
+								getResult = sql.select(in);
 
-									// Formatting the results of the sql
-									if (getResult != null) {
-										// Setting column names
-										getResult.get(0).getFieldNameList().stream().forEach(x -> {
-											response += "|\t" + x + "\t|";
-										});
+								// Formatting the results of the sql
+								if (getResult != null) {
+									// Setting column names
+									getResult.get(0).getFieldNameList().stream().forEach(x -> {
+										response += "|\t" + x + "\t|";
+									});
 
-										// Setting values
-										getResult.stream().forEach(x -> {
-											response += "\n";
-											for (String s : x.getFieldValueList()) {
-												response += "|\t" + s + "\t|";
-											}
-										});
-									}
+									// Setting values
+									getResult.stream().forEach(x -> {
+										response += "\n";
+										for (String s : x.getFieldValueList()) {
+											response += "|\t" + s + "\t|";
+										}
+									});
 								}
 							}
 						}
+
 					}
 				}
 				break;
