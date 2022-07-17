@@ -37,6 +37,9 @@ public class RequestMapper {
 		//Removes context path from URI
 		uriString.replace(0, req.getContextPath().length() + 1, "");
 		
+		//Removes Home/ from URI
+		uriString.replace(0, 5, "");
+		
 		//Testing for presence of path parameters
 		if(uriString.indexOf("/") != -1) {
 			//Placing path parameters into a request attribute

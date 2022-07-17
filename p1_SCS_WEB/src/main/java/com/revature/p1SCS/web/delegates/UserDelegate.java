@@ -53,8 +53,9 @@ public class UserDelegate implements ServletDelegate {
 
 	/* Handles the request after validating its input */
 	@Override
-	public void handle(HttpServletRequest req, HttpServletResponse resp) {
+	public void handle(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		try {
+			response = "";
 			writer = resp.getWriter();
 			in = objMapper.readValue(req.getInputStream(), Query.class);
 			in.setTableName("tbl_users");
@@ -69,7 +70,7 @@ public class UserDelegate implements ServletDelegate {
 								getResult = sql.select(in);
 
 								// Formatting the results of the sql
-								if (getResult != null) {
+								if (!getResult.equals(new ArrayList<Query>())) {
 									// Setting column names
 									getResult.get(0).getFieldNameList().stream().forEach(x -> {
 										response += "|\t" + x + "\t|";
@@ -83,10 +84,24 @@ public class UserDelegate implements ServletDelegate {
 										}
 									});
 								}
+								else {
+									response += "No results were found";
+								}
+							}
+							else {
+								response += "Invalid Arguments";
 							}
 						}
-
+						else {
+							response += "Invalid Filter Values";
+						}
 					}
+					else {
+						response += "Invalid Filters";
+					}
+				}
+				else {
+					response += "Invalid Fields";
 				}
 				break;
 			case "POST":// Will be an insert statement. Filter is not used.
@@ -122,6 +137,8 @@ public class UserDelegate implements ServletDelegate {
 			}
 			writer.write(response);
 		} catch (Exception e) {
+			e.printStackTrace();
+			resp.sendError(400, e.getMessage());
 			// TODO Exception Logger
 		}
 
