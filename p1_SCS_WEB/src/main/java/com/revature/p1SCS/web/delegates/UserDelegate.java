@@ -3,7 +3,9 @@ package com.revature.p1SCS.web.delegates;
 import java.util.ArrayList;
 import java.util.List;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
+import java.lang.reflect.Field;
 
 import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.databind.DatabindException;
@@ -53,13 +55,20 @@ public class UserDelegate implements ServletDelegate {
 
 	/* Handles the request after validating its input */
 	@Override
-	public void handle(HttpServletRequest req, HttpServletResponse resp) {
+	public void handle(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		try {
+			response = "";
 			writer = resp.getWriter();
-			in = objMapper.readValue(req.getInputStream(), Query.class);
+			req.getInputStream();
+			if(!(req.getInputStream().equals(InputStream.nullInputStream()))) {//Reads the body as a JSON object if there is a body to read
+				in = objMapper.readValue(req.getInputStream(), Query.class);
+			}
 			in.setTableName("tbl_users");
 			switch (req.getMethod()) {
 			case "GET": // Will be a select statement. Filter is optional.
+				if (in.getFieldNameList().equals(new ArrayList<>())) {//Will return all fields if none are given
+					in.setFieldNameList(validFieldNames);
+				}
 				if (validateFields(in.getFieldNameList())) {
 					if (validateFields(in.getFilterList()) || in.getFilterList().equals(new ArrayList<>())) {
 						if (validateValues(in.getFilterValueList(), in.getFilterList())
@@ -69,7 +78,7 @@ public class UserDelegate implements ServletDelegate {
 								getResult = sql.select(in);
 
 								// Formatting the results of the sql
-								if (getResult != null) {
+								if (!getResult.equals(new ArrayList<Query>())) {
 									// Setting column names
 									getResult.get(0).getFieldNameList().stream().forEach(x -> {
 										response += "|\t" + x + "\t|";
@@ -83,10 +92,24 @@ public class UserDelegate implements ServletDelegate {
 										}
 									});
 								}
+								else {
+									response += "No results were found";
+								}
+							}
+							else {
+								resp.sendError(400, "Invalid Arguments: \n" + response);
 							}
 						}
-
+						else {
+							resp.sendError(400, "Invalid Filter Values: \n" + response);
+						}
 					}
+					else {
+						resp.sendError(400, "Invalid Filters: \n" + response);
+					}
+				}
+				else {
+					resp.sendError(400, "Invalid Fields: \n" + response);
 				}
 				break;
 			case "POST":// Will be an insert statement. Filter is not used.
@@ -122,6 +145,8 @@ public class UserDelegate implements ServletDelegate {
 			}
 			writer.write(response);
 		} catch (Exception e) {
+			e.printStackTrace();
+			resp.sendError(400, e.getMessage());
 			// TODO Exception Logger
 		}
 
@@ -149,6 +174,7 @@ public class UserDelegate implements ServletDelegate {
 		/* Local Variables */
 		Boolean valid = true;
 		int index = 0;
+		String datatype = "";
 
 		/* Function */
 		if (values.stream().filter(x -> !(x.equals(""))).toArray().length == fields.stream()
@@ -158,25 +184,34 @@ public class UserDelegate implements ServletDelegate {
 					switch (fields.get(index)) {
 					case "userid": // integer
 						valid = v.integerType(s);
+						datatype = "integer";
 						break;
 					case "useremail": // varchar(50)
 						valid = v.varcharType(s, 50);
+						datatype = "varchar(50)";
 						break;
 					case "userpassword": // varchar(30)
 						valid = v.varcharType(s, 30);
+						datatype = "varchar(30)";
 						break;
 					case "userfname": // varchar(25)
 						valid = v.varcharType(s, 25);
+						datatype = "varchar(25)";
 						break;
 					case "userminit": // char(1)
 						valid = v.charType(s, 1);
+						datatype = "char(1)";
 						break;
 					case "userlname": // varchar(25)
 						valid = v.varcharType(s, 25);
+						datatype = "varchar(25)";
 						break;
 					default:
 						valid = false;
 						break;
+					}
+					if (!valid) {//Appends a response for the invalid input
+						response += "'" + s + "' is an invalid value for the data type of " + fields.get(index) + ": " + datatype ;
 					}
 					index++;
 				}
@@ -192,6 +227,7 @@ public class UserDelegate implements ServletDelegate {
 		/* Local Variables */
 		Boolean valid = true;
 		int index = 0;
+		String datatype = "";
 
 		/* Function */
 		if (args.stream().filter(x -> !(x.equals(""))).toArray().length == fields.stream().filter(x -> !(x.equals("")))
@@ -201,25 +237,34 @@ public class UserDelegate implements ServletDelegate {
 					switch (fields.get(index)) {
 					case "userid": // integer
 						valid = validNumArgs.contains(s);
+						datatype = "varchar(50)";
 						break;
 					case "useremail": // varchar(50)
 						valid = validStrArgs.contains(s.toUpperCase());
+						datatype = "varchar(50)";
 						break;
 					case "userpassword": // varchar(30)
 						valid = validStrArgs.contains(s.toUpperCase());
+						datatype = "varchar(50)";
 						break;
 					case "userfname": // varchar(25)
 						valid = validStrArgs.contains(s.toUpperCase());
+						datatype = "varchar(50)";
 						break;
 					case "userminit": // char(1)
 						valid = validStrArgs.contains(s.toUpperCase());
+						datatype = "varchar(50)";
 						break;
 					case "userlname": // varchar(25)
 						valid = validStrArgs.contains(s.toUpperCase());
+						datatype = "varchar(50)";
 						break;
 					default:
 						valid = false;
 						break;
+					}
+					if (!valid) {//Appends a response for the invalid input
+						response += "'" + s + "' is an invalid argument for the data type of " + fields.get(index) + ": " + datatype;
 					}
 					index++;
 				}
