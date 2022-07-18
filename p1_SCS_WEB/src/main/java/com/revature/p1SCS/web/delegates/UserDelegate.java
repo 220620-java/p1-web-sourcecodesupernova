@@ -27,8 +27,8 @@ public class UserDelegate implements ServletDelegate {
 	private List<Query> getResult = null;
 	private int result = -1;
 	private String response = "";
-	private List<String> validFieldNames = new ArrayList<>(), reqFieldNames = new ArrayList<>(),
-			validStrArgs = new ArrayList<>(), validNumArgs = new ArrayList<>();;
+	private List<String> nullList = new ArrayList<>(), validFieldNames = new ArrayList<>(),
+			reqFieldNames = new ArrayList<>(), validStrArgs = new ArrayList<>(), validNumArgs = new ArrayList<>();
 
 	/* Constructor */
 	public UserDelegate() {
@@ -71,15 +71,15 @@ public class UserDelegate implements ServletDelegate {
 			in.setKeys(new String[] { "userid" });
 			switch (req.getMethod()) {
 			case "GET": // Will be a select statement. Filter is optional.
-				if (in.getFieldNameList().equals(new ArrayList<>())) {// Will return all fields if none are given
+				if (in.getFieldNameList().equals(nullList)) {// Will return all fields if none are given
 					in.setFieldNameList(validFieldNames);
 				}
 				if (validateFields(in.getFieldNameList())) {
-					if (validateFields(in.getFilterList()) || in.getFilterList().equals(new ArrayList<>())) {
+					if (validateFields(in.getFilterList()) || in.getFilterList().equals(nullList)) {
 						if (validateValues(in.getFilterValueList(), in.getFilterList())
-								|| in.getFilterList().equals(new ArrayList<>())) {
+								|| in.getFilterList().equals(nullList)) {
 							if (validateArgs(in.getArgumentTypes(), in.getFilterList())
-									|| in.getFilterList().equals(new ArrayList<>())) {
+									|| in.getFilterList().equals(nullList)) {
 								getResult = sql.select(in);
 
 								// Formatting the results of the sql
@@ -114,14 +114,18 @@ public class UserDelegate implements ServletDelegate {
 				break;
 			case "POST":// Will be an insert statement. Filter is not used. useremail and userpassword
 						// are required.
-				if (in.getFieldNameList().equals(new ArrayList<>())) {// Will return all fields if none are given
+				if (in.getFieldNameList().equals(nullList)) {// Will return all fields if none are given
 					in.setFieldNameList(validFieldNames);
 				}
 				if (validateFields(in.getFieldNameList())) {
 					if (in.getFieldNameList().containsAll(reqFieldNames)) {// Testing for presence of required fields
 						if (validateValues(in.getFieldValueList(), in.getFieldNameList())) {
 							result = sql.insert(in);
-							response += "Rows Affected: " + result;
+							if (result != -1) {
+								response += "POST successful: \nRows Affected: " + result;
+							} else {
+								resp.sendError(500, "The server failed to process your request");
+							}
 						} else {
 							resp.sendError(400, "Invalid Values: \n" + response);
 						}
@@ -134,25 +138,63 @@ public class UserDelegate implements ServletDelegate {
 					resp.sendError(400, "Invalid Fields: \n" + response);
 				}
 				break;
-			case "PUT":// Will be an update statement. Filter is mandatory.
-				if (validateFields(in.getFieldNameList())) {
-					if (validateFields(in.getFilterList())) {
+			case "PUT":// Will be an update statement. At least one field and filter is mandatory.
+				if (validateFields(in.getFieldNameList()) && !(in.getFieldNameList().equals(nullList))) {
+					if (validateFields(in.getFilterList()) && !(in.getFilterList().equals(nullList))) {
 						if (validateValues(in.getFieldValueList(), in.getFieldNameList())) {
-							if (validateArgs(in.getArgumentTypes(), in.getFilterList())) {
-								result = sql.delete(in);
-								response += "Rows Affected: " + result;
+							if (validateValues(in.getFilterValueList(), in.getFilterList())) {
+								if (validateArgs(in.getArgumentTypes(), in.getFilterList())) {
+									result = sql.update(in);
+									if (result != -1) {
+										response += "PUT successful: \nRows Affected: " + result;
+									} else {
+										resp.sendError(500, "The server failed to process your request");
+									}
+								} else {
+									resp.sendError(400, "Invalid Arguments: \n" + response);
+								}
+							} else {
+								resp.sendError(400, "Invalid Filter Values: \n" + response);
 							}
+						} else {
+							resp.sendError(400, "Invalid Update Values: \n" + response);
 						}
+					} else {
+						if (in.getFilterList().equals(nullList)) {
+							resp.sendError(400, "Invalid Filters: \nAt least one filter is required to update");
+						} else {
+							resp.sendError(400, "Invalid Filters: \n" + response);
+						}
+					}
+				} else {
+					if (in.getFieldNameList().equals(nullList)) {
+						resp.sendError(400, "Invalid Fields: \nAt least one field is required to update");
+					} else {
+						resp.sendError(400, "Invalid Fields: \n" + response);
 					}
 				}
 				break;
 			case "DELETE":// Will be an delete statement. Filter is mandatory. Fields are not used.
-				if (validateFields(in.getFilterList())) {
+				if (validateFields(in.getFilterList()) && !(in.getFilterList().equals(nullList))) {
 					if (validateValues(in.getFilterValueList(), in.getFilterList())) {
 						if (validateArgs(in.getArgumentTypes(), in.getFilterList())) {
 							result = sql.delete(in);
-							response += "Rows Affected: " + result;
+							if (result != -1) {
+								response += "DELETE successful: \nRows Affected: " + result;
+							} else {
+								resp.sendError(500, "The server failed to process your request");
+							}
+						} else {
+							resp.sendError(400, "Invalid Arguments: \n" + response);
 						}
+					} else {
+						resp.sendError(400, "Invalid Filter Values: \n" + response);
+					}
+				} else {
+					if (in.getFilterList().equals(nullList)) {
+						resp.sendError(400, "Invalid Filters: \nAt least one filter is required to update");
+					} else {
+						resp.sendError(400, "Invalid Filters: \n" + response);
 					}
 				}
 				break;
