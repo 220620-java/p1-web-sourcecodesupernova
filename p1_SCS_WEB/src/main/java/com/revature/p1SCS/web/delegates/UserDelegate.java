@@ -27,8 +27,8 @@ public class UserDelegate implements ServletDelegate {
 	private List<Query> getResult = null;
 	private int result = -1;
 	private String response = "";
-	private List<String> validFieldNames = new ArrayList<>(), validStrArgs = new ArrayList<>(),
-			validNumArgs = new ArrayList<>();;
+	private List<String> validFieldNames = new ArrayList<>(), reqFieldNames = new ArrayList<>(),
+			validStrArgs = new ArrayList<>(), validNumArgs = new ArrayList<>();;
 
 	/* Constructor */
 	public UserDelegate() {
@@ -39,6 +39,10 @@ public class UserDelegate implements ServletDelegate {
 		validFieldNames.add("userfname");
 		validFieldNames.add("userminit");
 		validFieldNames.add("userlname");
+
+		// Setup reqFieldNames
+		reqFieldNames.add("useremail");
+		reqFieldNames.add("userpassword");
 
 		// Setup validStrArgs
 		validStrArgs.add("LIKE");
@@ -57,16 +61,17 @@ public class UserDelegate implements ServletDelegate {
 	@Override
 	public void handle(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		try {
+			in = new Query();
 			response = "";
 			writer = resp.getWriter();
-			req.getInputStream();
-			if(!(req.getInputStream().equals(InputStream.nullInputStream()))) {//Reads the body as a JSON object if there is a body to read
+			if (!(req.getInputStream().isFinished())) {// Reads the body as a JSON object if there is a body to read
 				in = objMapper.readValue(req.getInputStream(), Query.class);
 			}
 			in.setTableName("tbl_users");
+			in.setKeys(new String[] { "userid" });
 			switch (req.getMethod()) {
 			case "GET": // Will be a select statement. Filter is optional.
-				if (in.getFieldNameList().equals(new ArrayList<>())) {//Will return all fields if none are given
+				if (in.getFieldNameList().equals(new ArrayList<>())) {// Will return all fields if none are given
 					in.setFieldNameList(validFieldNames);
 				}
 				if (validateFields(in.getFieldNameList())) {
@@ -91,33 +96,42 @@ public class UserDelegate implements ServletDelegate {
 											response += "|\t" + s + "\t|";
 										}
 									});
-								}
-								else {
+								} else {
 									response += "No results were found";
 								}
-							}
-							else {
+							} else {
 								resp.sendError(400, "Invalid Arguments: \n" + response);
 							}
-						}
-						else {
+						} else {
 							resp.sendError(400, "Invalid Filter Values: \n" + response);
 						}
-					}
-					else {
+					} else {
 						resp.sendError(400, "Invalid Filters: \n" + response);
 					}
-				}
-				else {
+				} else {
 					resp.sendError(400, "Invalid Fields: \n" + response);
 				}
 				break;
-			case "POST":// Will be an insert statement. Filter is not used.
+			case "POST":// Will be an insert statement. Filter is not used. useremail and userpassword
+						// are required.
+				if (in.getFieldNameList().equals(new ArrayList<>())) {// Will return all fields if none are given
+					in.setFieldNameList(validFieldNames);
+				}
 				if (validateFields(in.getFieldNameList())) {
-					if (validateValues(in.getFieldValueList(), in.getFieldNameList())) {
-						result = sql.insert(in);
-						response += "Rows Affected: " + result;
+					if (in.getFieldNameList().containsAll(reqFieldNames)) {// Testing for presence of required fields
+						if (validateValues(in.getFieldValueList(), in.getFieldNameList())) {
+							result = sql.insert(in);
+							response += "Rows Affected: " + result;
+						} else {
+							resp.sendError(400, "Invalid Values: \n" + response);
+						}
+					} else {
+						resp.sendError(400,
+								"Invalid Fields: \nuseremail and userpassword are required for this request."
+										+ " Your request is missing one or both of them.");
 					}
+				} else {
+					resp.sendError(400, "Invalid Fields: \n" + response);
 				}
 				break;
 			case "PUT":// Will be an update statement. Filter is mandatory.
@@ -210,8 +224,9 @@ public class UserDelegate implements ServletDelegate {
 						valid = false;
 						break;
 					}
-					if (!valid) {//Appends a response for the invalid input
-						response += "'" + s + "' is an invalid value for the data type of " + fields.get(index) + ": " + datatype ;
+					if (!valid) {// Appends a response for the invalid input
+						response += "'" + s + "' is an invalid value for the data type of " + fields.get(index) + ": "
+								+ datatype;
 					}
 					index++;
 				}
@@ -263,8 +278,9 @@ public class UserDelegate implements ServletDelegate {
 						valid = false;
 						break;
 					}
-					if (!valid) {//Appends a response for the invalid input
-						response += "'" + s + "' is an invalid argument for the data type of " + fields.get(index) + ": " + datatype;
+					if (!valid) {// Appends a response for the invalid input
+						response += "'" + s + "' is an invalid argument for the data type of " + fields.get(index)
+								+ ": " + datatype;
 					}
 					index++;
 				}

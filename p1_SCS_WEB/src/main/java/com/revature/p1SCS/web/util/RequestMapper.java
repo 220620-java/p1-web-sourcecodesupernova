@@ -8,6 +8,7 @@ import java.util.Map;
 
 import com.revature.p1SCS.web.delegates.AccountDelegate;
 import com.revature.p1SCS.web.delegates.ServletDelegate;
+import com.revature.p1SCS.web.delegates.TransactionDelegate;
 import com.revature.p1SCS.web.delegates.UserDelegate;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,6 +22,7 @@ public class RequestMapper {
 	public RequestMapper() {
 		delegateMap.put("users", new UserDelegate());
 		delegateMap.put("accounts", new AccountDelegate());
+		delegateMap.put("transactions", new TransactionDelegate());
 	}
 	
 	/*Returns a delegate based on the given request's URI*/
