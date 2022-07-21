@@ -244,7 +244,7 @@ public class AccountDelegate implements ServletDelegate {
 			}
 		}
 		if (!valid) {
-			response = "The following fields are not valid for users:" + response;
+			response = "The following fields are not valid for accounts:" + response;
 		}
 		return valid;
 	}
@@ -337,7 +337,7 @@ public class AccountDelegate implements ServletDelegate {
 						break;
 					}
 					if (!valid) {// Appends a response for the invalid input
-						response += "'" + s + "' is an invalid value for the data type of " + fields.get(index) + ": "
+						response += "'" + s + "' is an invalid argument for the data type of " + fields.get(index) + ": "
 								+ datatype;
 					}
 					index++;
