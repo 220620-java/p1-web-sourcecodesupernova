@@ -66,8 +66,12 @@ public class TransactionDelegate implements ServletDelegate {
 		//Setup fkArgs
 		fkArgs.add("=");
 	}
-
-	/* Handles the request after validating its input */
+	
+	/** Handles the request based on the given verb (i.e. GET, POST, PUT, DELETE, etc.)
+	 * after validating its input 
+	 * 
+	 * @param req (HttpServletRequest): An object representing a HTTP request
+	 * @param resp (HttpServletResponse): An object representing a HTTP response*/
 	@Override
 	public void handle(HttpServletRequest req, HttpServletResponse resp) {
 		try {
@@ -232,6 +236,14 @@ public class TransactionDelegate implements ServletDelegate {
 
 	}
 
+	/** Validates the fields of the input by cross-referencing
+	 * them with the validFieldNames variable
+	 * 
+	 * Will append to the response variable if the input does not pass validation
+	 * 
+	 * @param fields (List<String>): A list of field names to be checked for validation
+	 * @return A Boolean representing the input's validity
+	 * */
 	protected Boolean validateFields(List<String> fields) {
 		/* Local Variables */
 		Boolean valid = true;
@@ -249,7 +261,22 @@ public class TransactionDelegate implements ServletDelegate {
 		return valid;
 	}
 
-	/* Validates values by comparing to the corresponding field's data type */
+	/** Validates the values of the input by cross-referencing
+	 * them with the data types of the fields variable. 
+	 * 
+	 * Data is validated through the ValidateData class. 
+	 * 
+	 * Lists with differing sizes will also return as invalid. 
+	 * 
+	 * Will append to the response variable if the input does not pass validation. 
+	 * 
+	 * This method is intended to be called only after the fields have been validated using
+	 * validateFields(), so it will return invalid if the field is not recognized.
+	 * 
+	 * @param values (List<String>): A list of values to be checked for validation
+	 * @param fields (List<String>): A list of field names to be referenced during validation
+	 * @return A Boolean representing the input's validity
+	 * */
 	protected Boolean validateValues(List<String> values, List<String> fields) {
 		/* Local Variables */
 		Boolean valid = true;
@@ -307,7 +334,20 @@ public class TransactionDelegate implements ServletDelegate {
 		return valid;
 	}
 
-	/* Validates arguments by comparing to the corresponding field's data type */
+	/** Validates the arguments of the input by cross-referencing
+	 * them with the data types of the fields variable. 
+	 * 
+	 * Lists with differing sizes will also return as invalid. 
+	 * 
+	 * Will append to the response variable if the input does not pass validation. 
+	 * 
+	 * This method is intended to be called only after the fields have been validated using
+	 * validateFields(), so it will return invalid if the field is not recognized.
+	 * 
+	 * @param args (List<String>): A list of arguments to be checked for validation
+	 * @param fields (List<String>): A list of field names to be referenced during validation
+	 * @return A Boolean representing the input's validity
+	 * */
 	protected Boolean validateArgs(List<String> args, List<String> fields) {
 		/* Local Variables */
 		Boolean valid = true;
